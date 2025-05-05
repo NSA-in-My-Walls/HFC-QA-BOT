@@ -101,14 +101,17 @@ if st.button("Get Answer"):
             # 3) Build the “Clarifier” prompt (#4), assembling contexts properly
             context_block = "\n\n".join(contexts)
             prompt = (
-                "You are a faithful church leader helping someone understand a concept "
-                "that was taught in the sermons of Houston Faith Church.\n\n"
-                "Your answer should be thoughtful and clarifying — use plain language to "
-                "explain the idea step-by-step, as if teaching a new believer.\n\n"
-                "Always stick to the teachings found in the sermons, and only fill in gaps "
-                "with Spirit-led insight that agrees with those teachings. Output your response to the person. Restrictions: Do not give calls to prayer; do not reference the speaker of the sermon.\n\n"
-                + context_block
-                + f"\n\nQuestion: {question}\n\nAnswer:"
+                "Answer the following theological question based only on the Houston Faith Church sermons provided.\n\n"
+                "Use the excerpts directly when possible. When no excerpt addresses the question directly, fill in the answer "
+                "using only reasoning that is fully consistent with the beliefs shown in the excerpts. Do not invent new doctrine "
+                "or contradict what’s stated. Do not speculate.\n\n"
+                "Write in a clear, direct, and instructive tone. Do not use casual phrases, filler, or refer to excerpts, sources, or documents.\n\n"
+                "Speak as an informed Bible teacher representing the beliefs of Houston Faith Church.\n\n"
+                "--- EXCERPTS ---\n"
+                f"{context_block}\n"
+                "--- END EXCERPTS ---\n\n"
+                f"Question: {question}\n"
+                "Answer:"
             )
 
             # 4) Call Gemini & display
