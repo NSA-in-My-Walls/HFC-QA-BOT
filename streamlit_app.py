@@ -1,10 +1,5 @@
 # streamlit_app.py
 import logging
-st.set_page_config(
-    page_title="Houston Faith Church Q&A",
-    layout="wide",
-    initial_sidebar_state="expanded"   # ← forces the sidebar open
-)
 
 # Silence Streamlit watcher warnings
 logging.getLogger("streamlit.watcher.local_sources_watcher").setLevel(logging.ERROR)
@@ -17,6 +12,12 @@ from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer
 import google.generativeai as genai
 import json
+
+st.set_page_config(
+    page_title="Houston Faith Church Q&A",
+    layout="wide",
+    initial_sidebar_state="expanded"   # ← forces the sidebar open
+)
 
 # ─── Configuration ─────────────────────────────────────────────────────────
 TRANSCRIPT_DIR = "sermon_transcripts"
