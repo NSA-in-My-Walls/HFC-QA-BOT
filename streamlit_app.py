@@ -29,7 +29,7 @@ video_title_map = {entry["id"]: entry.get("title", entry["id"]) for entry in vid
 # ─── Load environment ─────────────────────────────────────────────────────────
 load_dotenv("info.env")
 genai.configure(api_key=os.environ["API_KEY"])
-model = genai.GenerativeModel("gemini-1.5-flash")
+model = genai.GenerativeModel("gemini-2.0-flash")
 
 # ─── Cached resource loading ──────────────────────────────────────────────────
 @st.cache_resource
