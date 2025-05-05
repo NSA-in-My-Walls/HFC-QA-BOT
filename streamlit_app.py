@@ -44,7 +44,24 @@ index, meta, embedder = load_resources()
 
 # ─── Sidebar settings ─────────────────────────────────────────────────────────
 st.sidebar.title("Settings")
-K = st.sidebar.slider("Number of chunks (K)", min_value=1, max_value=20, value=6, step=1) # for dynamic K value: st.sidebar.slider("Number of chunks (K)", min_value=1, max_value=20, value=6, step=1) | K = 13 works ok
+
+st.sidebar.markdown(
+    """
+    **Context window (K)**  
+    This controls how many 500-word sermon chunks are pulled in to answer each question.  
+    - **Lower K** (e.g. 2–4): Faster, more focused answers  
+    - **Higher K** (e.g. 10–15): Broader context, but may be slower or include off-topic bits  
+    """
+)
+
+K = st.sidebar.slider(
+    "Number of chunks (K)",
+    min_value=1,
+    max_value=20,
+    value=6,
+    step=1
+)
+
 
 # ─── App UI ───────────────────────────────────────────────────────────────────
 st.title("Houston Faith Church Sermon Q&A")
