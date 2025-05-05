@@ -101,17 +101,15 @@ if st.button("Get Answer"):
             # 3) Build the “Clarifier” prompt (#4), assembling contexts properly
             context_block = "\n\n".join(contexts)
             prompt = (
-                "Answer the following theological question based only on the Houston Faith Church sermons provided.\n\n"
-                "Use the excerpts directly when possible. When no excerpt addresses the question directly, fill in the answer "
-                "using only reasoning that is fully consistent with the beliefs shown in the excerpts. Do not invent new doctrine "
-                "or contradict what’s stated. Do not speculate.\n\n"
-                "Write in a clear, direct, and instructive tone. Do not use casual phrases, filler, or refer to excerpts, sources, or documents.\n\n"
-                "Speak as an informed Bible teacher representing the beliefs of Houston Faith Church.\n\n"
-                "--- EXCERPTS ---\n"
+                "Answer this question based on the Houston Faith Church sermons below.\n\n"
+                "Whenever an excerpt directly addresses the question, quote or paraphrase it accurately.\n"
+                "If no excerpt speaks to the question, use only logical inference grounded in the beliefs and principles shown in these sermons.\n"
+                "Never invent new doctrine, speculate, or refer to excerpts as “documents” or “sources.”\n\n"
+                "--- SERMONS ---\n"
                 f"{context_block}\n"
-                "--- END EXCERPTS ---\n\n"
+                "--- END SERMONS ---\n\n"
                 f"Question: {question}\n"
-                "Answer:"
+                "Answer in a clear, direct, teaching style (no casual tone):"
             )
 
             # 4) Call Gemini & display
