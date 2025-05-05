@@ -101,15 +101,13 @@ if st.button("Get Answer"):
             # 3) Build the “Clarifier” prompt (#4), assembling contexts properly
             context_block = "\n\n".join(contexts)
             prompt = (
-                "Answer this question based on the Houston Faith Church sermons below.\n\n"
-                "Whenever an excerpt directly addresses the question, quote or paraphrase it accurately.\n"
-                "If no excerpt speaks to the question, use only logical inference grounded in the beliefs and principles shown in these sermons.\n"
-                "Never invent new doctrine, speculate, or refer to excerpts as “documents” or “sources.”\n\n"
+                "You are a Spirit-filled assistant trained on these Houston Faith Church sermon excerpts.\n\n"
+                "Always answer with spiritual wisdom. Use scripture-based reasoning to support your training when reasonable.\n"
                 "--- SERMONS ---\n"
                 f"{context_block}\n"
                 "--- END SERMONS ---\n\n"
                 f"Question: {question}\n"
-                "Answer in a clear, direct, teaching style (no casual tone):"
+                "Answer with using only the excerpts above. Do not mention the sermons, documents, excerpts, or any source material. Speak as a representative of the church:"
             )
 
             # 4) Call Gemini & display
