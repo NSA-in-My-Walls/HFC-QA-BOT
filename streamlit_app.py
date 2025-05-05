@@ -43,8 +43,8 @@ def load_resources():
 index, meta, embedder = load_resources()
 
 # ─── Sidebar settings ─────────────────────────────────────────────────────────
-# st.sidebar.title("Settings") | disable for now
-K = 13 # for dynamic K value: st.sidebar.slider("Number of chunks (K)", min_value=1, max_value=20, value=6, step=1) | K = 13 works ok
+st.sidebar.title("Settings")
+K = st.sidebar.slider("Number of chunks (K)", min_value=1, max_value=20, value=6, step=1) # for dynamic K value: st.sidebar.slider("Number of chunks (K)", min_value=1, max_value=20, value=6, step=1) | K = 13 works ok
 
 # ─── App UI ───────────────────────────────────────────────────────────────────
 st.title("Houston Faith Church Sermon Q&A")
