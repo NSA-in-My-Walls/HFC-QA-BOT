@@ -1,0 +1,7 @@
+streamlit
+faiss-cpu
+sentence-transformers
+google-generativeai
+python-dotenv
+youtube-transcript-api
+yt-dlp
