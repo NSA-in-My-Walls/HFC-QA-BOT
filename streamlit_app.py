@@ -60,7 +60,7 @@ st.sidebar.markdown(
     - **Higher K**: more context, may include off-topic details.  
     """
 )
-K = st.sidebar.slider("Number of chunks (K)", 1, 20, 6, step=1)
+K = st.sidebar.slider("Number of chunks (K)", 1, 20, 8, step=1)
 
 # ─── MMR re-ranking function ─────────────────────────────────────────────────
 def mmr(doc_embs: np.ndarray, query_emb: np.ndarray, top_n: int, k: int, lambda_param: float = 0.7):
