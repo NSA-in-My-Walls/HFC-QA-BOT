@@ -1,0 +1,3 @@
+# ignore secrets and caches
+info.env
+__pycache__/
