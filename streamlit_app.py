@@ -4,101 +4,116 @@ import logging
 # Silence Streamlit watcher warnings
 logging.getLogger("streamlit.watcher.local_sources_watcher").setLevel(logging.ERROR)
 logging.getLogger("streamlit.runtime.scriptrunner_utils.script_run_context").setLevel(logging.ERROR)
+
 import os
-import faiss
+import json
 import pickle
+import faiss
 import streamlit as st
+import numpy as np
 from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer
 import google.generativeai as genai
-import json
+from sklearn.metrics.pairwise import cosine_similarity
 
+# ─── Set page config ─────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="Houston Faith Church Q&A",
     layout="wide",
-    initial_sidebar_state="expanded"   # ← forces the sidebar open
+    initial_sidebar_state="expanded"
 )
 
 # ─── Configuration ─────────────────────────────────────────────────────────
 TRANSCRIPT_DIR = "sermon_transcripts"
-# If you used 500‐word chunks when you indexed:
 CHUNK_SIZE     = 500
-# (If you used a different size in your embed script, match that here)
 INDEX_DIR      = "sermon_faiss_free"
 EMBED_MODEL    = "all-MiniLM-L6-v2"
 
-# ─── Load videos to build map ─────────────────────────────────────────────────────────
+# ─── Load video titles ────────────────────────────────────────────────────────
 with open("videos.json", "r", encoding="utf-8") as f:
     vids_data = json.load(f).get("entries", [])
 video_title_map = {entry["id"]: entry.get("title", entry["id"]) for entry in vids_data}
 
-# ─── Load environment ─────────────────────────────────────────────────────────
+# ─── Load environment & configure Gemini ───────────────────────────────────────
 load_dotenv("info.env")
 genai.configure(api_key=os.environ["API_KEY"])
 model = genai.GenerativeModel("gemini-2.0-flash")
 
-# ─── Cached resource loading ──────────────────────────────────────────────────
+# ─── Cache resource loading ──────────────────────────────────────────────────
 @st.cache_resource
 def load_resources():
-    index = faiss.read_index("sermon_faiss_free/sermon_index.faiss")
-    with open("sermon_faiss_free/sermon_meta.pkl", "rb") as f:
+    index = faiss.read_index(os.path.join(INDEX_DIR, "sermon_index.faiss"))
+    with open(os.path.join(INDEX_DIR, "sermon_meta.pkl"), "rb") as f:
         meta = pickle.load(f)
-    embedder = SentenceTransformer("all-MiniLM-L6-v2")
+    embedder = SentenceTransformer(EMBED_MODEL)
     return index, meta, embedder
 
 index, meta, embedder = load_resources()
 
 # ─── Sidebar settings ─────────────────────────────────────────────────────────
 st.sidebar.title("Settings")
-
 st.sidebar.markdown(
     """
     **Context window (K)**  
-    This controls how many 500-word sermon chunks are pulled in to answer each question.  
-    - **Lower K** (e.g. 2–4): Faster, more focused answers  
-    - **Higher K** (e.g. 10–15): Broader context, but may be slower or include off-topic bits  
+    Number of sermon chunks fetched for initial retrieval.  
+    - **Lower K**: faster, more focused.  
+    - **Higher K**: more context, may include off-topic details.  
     """
 )
+K = st.sidebar.slider("Number of chunks (K)", 1, 20, 6, step=1)
 
-K = st.sidebar.slider(
-    "Number of chunks (K)",
-    min_value=1,
-    max_value=20,
-    value=6,
-    step=1
-)
-
+# ─── MMR re-ranking function ─────────────────────────────────────────────────
+def mmr(doc_embs: np.ndarray, query_emb: np.ndarray, top_n: int, k: int, lambda_param: float = 0.7):
+    # similarity to query
+    sim_q = cosine_similarity(doc_embs, query_emb.reshape(1, -1)).reshape(-1)
+    # pairwise similarity among docs
+    sim_docs = cosine_similarity(doc_embs)
+    selected = [int(np.argmax(sim_q))]
+    candidates = set(range(top_n)) - set(selected)
+    for _ in range(1, k):
+        mmr_scores = {}
+        for idx in candidates:
+            rel = sim_q[idx]
+            red = max(sim_docs[idx][j] for j in selected)
+            mmr_scores[idx] = lambda_param * rel - (1 - lambda_param) * red
+        next_idx = max(mmr_scores, key=mmr_scores.get)
+        selected.append(next_idx)
+        candidates.remove(next_idx)
+    return selected
 
 # ─── App UI ───────────────────────────────────────────────────────────────────
 st.title("Houston Faith Church Sermon Q&A")
-question = st.text_input("THIS IS STILL IN DEVELOPMENT, BEING UPDATED CONSTANTLY. Ask a question about our sermons:")
+question = st.text_input("Ask a question about our sermons:")
 
 if st.button("Get Answer"):
     if not question:
         st.warning("Please enter a question.")
     else:
         with st.spinner("Retrieving answer..."):
-            # 1) Embed & retrieve
-            q_vec = embedder.encode([question])
-            _, I = index.search(q_vec, K)
-
-            # 2) Gather contexts & links
-            contexts = []
-            links    = []
-            for idx in I[0]:
-                video_id, chunk_i, start_time = meta[idx]
-                # load chunk text…
-                words = open(os.path.join(TRANSCRIPT_DIR, f"{video_id}.json"),
-                             encoding="utf-8").read().split()
+            # 1) Embed question
+            q_vec = embedder.encode([question])[0]
+            # 2) Retrieve top_n by FAISS
+            top_n = min(20, len(meta))
+            D, I = index.search(np.array([q_vec]), top_n)
+            hit_ids = I[0].tolist()
+            # 3) Gather initial contexts and links
+            contexts_n, links_n = [], []
+            for vid_idx in hit_ids:
+                video_id, chunk_i, start_time = meta[vid_idx]
+                # load chunk text
+                txt = open(os.path.join(TRANSCRIPT_DIR, f"{video_id}.txt"), encoding="utf-8").read().split()
                 start, end = chunk_i * CHUNK_SIZE, (chunk_i + 1) * CHUNK_SIZE
-                contexts.append(" ".join(words[start:end]))
-
-                # build timestamped link…
+                contexts_n.append(" ".join(txt[start:end]))
                 url = f"https://www.youtube.com/watch?v={video_id}&t={int(start_time)}s"
                 title = video_title_map.get(video_id, video_id)
-                links.append((url, title, start_time))
-
-            # 3) Build the “Clarifier” prompt (#4), assembling contexts properly
+                links_n.append((url, title, start_time))
+            # 4) Compute embeddings for top_n contexts
+            doc_embs = embedder.encode(contexts_n, convert_to_numpy=True)
+            # 5) MMR re-rank to select final K
+            sel = mmr(doc_embs, q_vec, top_n, K)
+            contexts = [contexts_n[i] for i in sel]
+            links    = [links_n[i]    for i in sel]
+            # 6) Build prompt
             context_block = "\n\n".join(contexts)
             prompt = (
                 "You are a Spirit-filled assistant trained on these Houston Faith Church sermon excerpts.\n\n"
@@ -110,19 +125,16 @@ if st.button("Get Answer"):
                 "Answer with using only the excerpts above. Do not mention the sermons, documents, excerpts, or any source material. Speak as a representative of the church:"
             )
 
-            # 4) Call Gemini & display
+            # 7) Call Gemini & display
             response = model.generate_content(prompt)
-            st.markdown(f"**Answer:**\n\n{response.text.strip()}")
-
-            # 5) Show referenced sermons with timestamps
-            def fmt(ts_float):
-                ts = int(ts_float)
-                h = ts // 3600
-                m = (ts % 3600) // 60
-                s = ts % 60
+            answer = response.text.strip()
+            st.markdown(f"**Answer:**\n\n{answer}")
+            # 8) Show referenced sermons
+            def fmt(ts):
+                t = int(ts)
+                h, m = divmod(t, 3600)
+                m, s = divmod(m, 60)
                 return f"{h}:{m:02d}:{s:02d}"
-
             st.markdown("**Referenced Sermons:**")
             for url, title, ts in sorted(links, key=lambda x: x[1]):
                 st.markdown(f"- [{title} @ {fmt(ts)}]({url})")
-
