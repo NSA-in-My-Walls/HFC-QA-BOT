@@ -71,7 +71,7 @@ K = st.sidebar.slider(
 
 # ─── App UI ───────────────────────────────────────────────────────────────────
 st.title("Houston Faith Church Sermon Q&A")
-question = st.text_input("Ask a question about our sermons:")
+question = st.text_input("THIS IS STILL IN DEVELOPMENT, BEING UPDATED CONSTANTLY. Ask a question about our sermons:")
 
 if st.button("Get Answer"):
     if not question:
