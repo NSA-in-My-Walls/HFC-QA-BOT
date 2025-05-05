@@ -55,7 +55,7 @@ st.sidebar.title("Settings")
 st.sidebar.markdown(
     """
     **Context window (K)**  
-    Number of sermon chunks fetched for initial retrieval.  
+    Number of 500 word sermon chunks fetched for analyzing.  
     - **Lower K**: faster, more focused.  
     - **Higher K**: more context, may include off-topic details.  
     """
