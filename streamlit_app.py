@@ -92,28 +92,44 @@ if st.button("Get Answer"):
         with st.spinner("Retrieving answer..."):
             # 1) Embed question
             q_vec = embedder.encode([question])[0]
-            # 2) Retrieve top_n by FAISS
+
+            # 2) Retrieve top_n candidates from FAISS
             top_n = min(20, len(meta))
             D, I = index.search(np.array([q_vec]), top_n)
             hit_ids = I[0].tolist()
-            # 3) Gather initial contexts and links
+
+            # 3) Gather initial contexts & links
             contexts_n, links_n = [], []
             for vid_idx in hit_ids:
                 video_id, chunk_i, start_time = meta[vid_idx]
-                # load chunk text
-                txt = open(os.path.join(TRANSCRIPT_DIR, f"{video_id}.txt"), encoding="utf-8").read().split()
+
+                # Load the transcript JSON
+                with open(os.path.join(TRANSCRIPT_DIR, f"{video_id}.json"), encoding="utf-8") as jf:
+                    segs = json.load(jf)
+
+                # Flatten into words
+                words = []
+                for seg in segs:
+                    words.extend(seg["text"].split())
+
+                # Slice the chunk
                 start, end = chunk_i * CHUNK_SIZE, (chunk_i + 1) * CHUNK_SIZE
-                contexts_n.append(" ".join(txt[start:end]))
+                contexts_n.append(" ".join(words[start:end]))
+
+                # Prepare the timestamped link
                 url = f"https://www.youtube.com/watch?v={video_id}&t={int(start_time)}s"
                 title = video_title_map.get(video_id, video_id)
                 links_n.append((url, title, start_time))
-            # 4) Compute embeddings for top_n contexts
+
+            # 4) Compute embeddings for those top_n contexts
             doc_embs = embedder.encode(contexts_n, convert_to_numpy=True)
-            # 5) MMR re-rank to select final K
-            sel = mmr(doc_embs, q_vec, top_n, K)
+
+            # 5) Rerank with MMR to pick final K chunks
+            sel = mmr(doc_embs, q_vec, top_n=top_n, k=K, lambda_param=0.7)
             contexts = [contexts_n[i] for i in sel]
             links    = [links_n[i]    for i in sel]
-            # 6) Build prompt
+
+            # 6) Build the prompt
             context_block = "\n\n".join(contexts)
             prompt = (
                 "You are a Spirit-filled assistant trained on these Houston Faith Church sermon excerpts.\n\n"
@@ -129,12 +145,14 @@ if st.button("Get Answer"):
             response = model.generate_content(prompt)
             answer = response.text.strip()
             st.markdown(f"**Answer:**\n\n{answer}")
+
             # 8) Show referenced sermons
             def fmt(ts):
                 t = int(ts)
-                h, m = divmod(t, 3600)
-                m, s = divmod(m, 60)
+                h, rem = divmod(t, 3600)
+                m, s = divmod(rem, 60)
                 return f"{h}:{m:02d}:{s:02d}"
+
             st.markdown("**Referenced Sermons:**")
             for url, title, ts in sorted(links, key=lambda x: x[1]):
                 st.markdown(f"- [{title} @ {fmt(ts)}]({url})")
