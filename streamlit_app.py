@@ -43,6 +43,12 @@ def load_resources():
 index, meta, embedder = load_resources()
 
 # ─── Sidebar settings ─────────────────────────────────────────────────────────
+st.set_page_config(
+    page_title="Houston Faith Church Q&A",
+    layout="wide",
+    initial_sidebar_state="expanded"   # ← forces the sidebar open
+)
+
 st.sidebar.title("Settings")
 
 st.sidebar.markdown(
