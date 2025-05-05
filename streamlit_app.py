@@ -14,6 +14,7 @@ import numpy as np
 from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer
 import google.generativeai as genai
+from google.generativeai import types
 from sklearn.metrics.pairwise import cosine_similarity
 
 # ─── Set page config ─────────────────────────────────────────────────────────
@@ -142,7 +143,14 @@ if st.button("Get Answer"):
             )
 
             # 7) Call Gemini & display
-            response = model.generate_content(prompt)
+            response = model.generate_content(
+                prompt,
+                generation_config=types.GenerationConfig(
+                    temperature=0.3,       # lower randomness for doctrinal precision
+                    top_p=0.85,            # nucleus sampling cutoff
+                    max_output_tokens=2048 # allow longer answers if needed
+                )
+            )
             answer = response.text.strip()
             st.markdown(f"**Answer:**\n\n{answer}")
 
