@@ -1,5 +1,10 @@
 # streamlit_app.py
 import logging
+st.set_page_config(
+    page_title="Houston Faith Church Q&A",
+    layout="wide",
+    initial_sidebar_state="expanded"   # ← forces the sidebar open
+)
 
 # Silence Streamlit watcher warnings
 logging.getLogger("streamlit.watcher.local_sources_watcher").setLevel(logging.ERROR)
@@ -43,12 +48,6 @@ def load_resources():
 index, meta, embedder = load_resources()
 
 # ─── Sidebar settings ─────────────────────────────────────────────────────────
-st.set_page_config(
-    page_title="Houston Faith Church Q&A",
-    layout="wide",
-    initial_sidebar_state="expanded"   # ← forces the sidebar open
-)
-
 st.sidebar.title("Settings")
 
 st.sidebar.markdown(
