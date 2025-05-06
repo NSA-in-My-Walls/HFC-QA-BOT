@@ -146,7 +146,7 @@ if st.button("Get Answer"):
             response = model.generate_content(
                 prompt,
                 generation_config=types.GenerationConfig(
-                    temperature=0.3,       # lower randomness for doctrinal precision
+                    temperature=0.5,       # lower randomness for doctrinal precision
                     top_p=0.85,            # nucleus sampling cutoff
                     max_output_tokens=2048 # allow longer answers if needed
                 )
