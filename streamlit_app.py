@@ -139,7 +139,7 @@ if st.button("Get Answer"):
                 f"{context_block}\n"
                 "--- END SERMONS ---\n\n"
                 f"Question: {question}\n"
-                "Answer with using only the excerpts above. Do not mention the sermons, documents, excerpts, or any source material. Avoid using excessive paragraph breaks. Speak as a representative of the church:"
+                "Answer with using only the excerpts above. Do not mention the sermons, documents, excerpts, or any source material. Speak as a representative of the church:"
             )
 
             # 7) Call Gemini & display
