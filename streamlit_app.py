@@ -25,7 +25,7 @@ logging.getLogger("streamlit.runtime.scriptrunner_utils.script_run_context").set
 st.set_page_config(
     page_title="Houston Faith Church Q&A",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 # ─── Constants & paths ─────────────────────────────────────────────────────────
@@ -90,9 +90,10 @@ st.sidebar.markdown(
     Number of 500-word chunks fetched for each question.  
     - Lower K → faster, more focused.  
     - Higher K → more context, may include off-topic details.
+    - Default value of (9)
     """
 )
-K = st.sidebar.slider("Number of chunks (K)", 1, 20, 8, step=1)
+K = st.sidebar.slider("Number of chunks (K)", 1, 20, 9, step=1)
 
 # ─── MMR re-ranking ─────────────────────────────────────────────────────────────
 def mmr(doc_embs: np.ndarray, query_emb: np.ndarray, top_n: int, k: int,
@@ -197,13 +198,45 @@ if st.button("Get Answer"):
             answer = response.text.strip()
             st.markdown(f"**Answer:**\n\n{answer}")
 
-            # ─── 8) Display “Referenced Sermons” with timestamps ───────
+            # Build score_map with Python floats up front:
+            pre_mmr_scores = sem_sims[sem_order]                 # scores for the M candidates
+            sel_scores     = [pre_mmr_scores[i] for i in sel_relative]
+            score_map = {
+                idx: float(score) for idx, score in zip(sel_global, sel_scores)
+            }
+
+            # ─── 8) Primary vs Additional & relevance bars ──────────────
             def fmt(ts: float) -> str:
                 t = int(ts)
                 h, rem = divmod(t, 3600)
                 m, s   = divmod(rem, 60)
                 return f"{h}:{m:02d}:{s:02d}"
 
-            st.markdown("**Referenced Sermons:**")
-            for url, title, ts in sorted(links, key=lambda x: x[1]):
-                st.markdown(f"- [{title} @ {fmt(ts)}]({url})")
+            primary_idx    = max(sel_global, key=lambda i: score_map[i])
+            secondary_idxs = [i for i in sel_global if i != primary_idx]
+
+            # Primary Source
+            st.subheader("Primary Source")
+            vid, _, ts = meta[primary_idx]
+            title      = video_title_map.get(vid, vid)
+            url        = f"https://www.youtube.com/watch?v={vid}&t={int(ts)}s"
+            sim        = score_map[primary_idx]
+            st.markdown(f"- **[{title} @ {fmt(ts)}]({url})**  ({sim:.2f})")
+            st.progress(min(sim, 1.0))
+
+            # Additional Sources
+            if secondary_idxs:
+                st.subheader("Additional Sources - Ranked by similiarity score")
+                # Sort additional sources by descending similarity
+                secondary_sorted = sorted(
+                    secondary_idxs,
+                    key=lambda i: score_map[i],
+                    reverse=True
+                )
+                for idx in secondary_sorted:
+                    vid, _, ts = meta[idx]
+                    title      = video_title_map.get(vid, vid)
+                    url        = f"https://www.youtube.com/watch?v={vid}&t={int(ts)}s"
+                    sim        = score_map[idx]
+                    st.markdown(f"- [{title} @ {fmt(ts)}]({url})  ({sim:.2f})")
+                    st.progress(min(sim, 1.0))
