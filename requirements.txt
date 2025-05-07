@@ -6,3 +6,4 @@ python-dotenv
 youtube-transcript-api
 yt-dlp
 hf_xet
+rank_bm25
