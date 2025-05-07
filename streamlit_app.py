@@ -102,7 +102,7 @@ if st.button("Get Answer"):
             # 3) Gather initial contexts & links
             contexts_n, links_n = [], []
             for vid_idx in hit_ids:
-                video_id, chunk_i, start_time = meta[vid_idx]
+                video_id, start_idx, start_time = meta[vid_idx]
 
                 # Load the transcript JSON
                 with open(os.path.join(TRANSCRIPT_DIR, f"{video_id}.json"), encoding="utf-8") as jf:
@@ -113,10 +113,11 @@ if st.button("Get Answer"):
                 for seg in segs:
                     words.extend(seg["text"].split())
 
-                # Slice the chunk
-                start, end = chunk_i * CHUNK_SIZE, (chunk_i + 1) * CHUNK_SIZE
-                contexts_n.append(" ".join(words[start:end]))
-
+                # Slice the (overlapping) chunk using the stored start index
+                contexts_n.append(" ".join(
+                    words[start_idx : start_idx + CHUNK_SIZE]
+                ))
+                
                 # Prepare the timestamped link
                 url = f"https://www.youtube.com/watch?v={video_id}&t={int(start_time)}s"
                 title = video_title_map.get(video_id, video_id)
