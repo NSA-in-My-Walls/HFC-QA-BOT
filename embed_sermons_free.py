@@ -20,13 +20,17 @@ for fname in os.listdir("sermon_transcripts"):
             words_with_time.append((w, seg["start"]))
     
     # chunk the word list
-    for i in range(0, len(words_with_time), CHUNK_SIZE):
-        chunk = words_with_time[i:i+CHUNK_SIZE]
-        text = " ".join(w for w, _ in chunk)
-        start_time = chunk[0][1]        # start time of first word in chunk
+    STRIDE = CHUNK_SIZE // 2
+    for start in range(0, len(words_with_time), STRIDE):
+        chunk = words_with_time[start : start + CHUNK_SIZE]
+        if not chunk:
+            break
+        text = " ".join(w for w,_ in chunk)
+        start_time = chunk[0][1]
+        # store start index directly
+        meta.append((video_id, start, start_time))
         documents.append(text)
-        meta.append((video_id, i//CHUNK_SIZE, start_time))
-
+        
 # embed with Sentence-Transformers
 model = SentenceTransformer("all-MiniLM-L6-v2")
 embs = model.encode(documents, convert_to_numpy=True)
