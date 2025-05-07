@@ -12,14 +12,23 @@ Scheduled Index UpdatesGitHub Actions workflow to download new transcripts and r
 
 Repository Structure
 ├── .github/workflows/weekly-index.yml   # GitHub Actions for transcript & index refresh
+
 ├── sermon_transcripts/                  # Transcript JSONs (downloaded)
+
 ├── sermon_faiss_free/                   # FAISS index & metadata
+
 ├── embed_sermons_free.py                # Script to build FAISS & BM25 indexes
+
 ├── download_transcripts.py              # Script to fetch new sermon transcripts
+
 ├── streamlit_app.py                     # Main Streamlit application
+
 ├── videos.json                          # Video ID → title mapping
+
 ├── info.env                             # Environment variables (not committed)
+
 ├── requirements.txt                     # Python dependencies
+
 └── README.md                            # This file
 
 Setup & Installation
