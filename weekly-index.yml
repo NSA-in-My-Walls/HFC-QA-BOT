@@ -1,0 +1,44 @@
+name: Weekly Sermon & Index Update
+
+# run every Monday at 2 AM UTC
+on:
+  schedule:
+    - cron:  '0 2 * * 1'    
+
+jobs:
+  update-sermons:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout repo
+        uses: actions/checkout@v3
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.11'
+
+      - name: 📦 Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: 📰 Download transcripts
+        run: python download_transcripts.py
+
+      - name: 💾 Commit new transcripts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "actions@github.com"
+          git add sermon_transcripts/
+          git diff --quiet --staged || git commit -m "Weekly transcript refresh"
+
+      - name: 🧮 Rebuild FAISS & BM25 indexes
+        run: python embed_sermons_free.py
+
+      - name: 🔄 Commit rebuilt indexes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "actions@github.com"
+          git add sermon_faiss_free/
+          git diff --quiet --staged || git commit -m "Weekly index rebuild"
+
+      - name: 🚀 Push changes
+        run: git push
