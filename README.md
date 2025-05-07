@@ -11,6 +11,7 @@ Relevance BarVisual progress bars showing cosine-similarity scores (0.0 – 
 Scheduled Index UpdatesGitHub Actions workflow to download new transcripts and rebuild indexes weekly.
 
 Repository Structure
+
 ├── .github/workflows/weekly-index.yml   # GitHub Actions for transcript & index refresh
 
 ├── sermon_transcripts/                  # Transcript JSONs (downloaded)
