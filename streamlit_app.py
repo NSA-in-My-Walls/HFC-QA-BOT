@@ -125,8 +125,8 @@ def mmr(doc_embs: np.ndarray, query_emb: np.ndarray, top_n: int, k: int,
     return selected
 
 # ─── App UI: title & input ─────────────────────────────────────────────────────
-st.title("Houston Faith Church Sermon Q&A")
-question = st.text_input("Ask a question about our sermons:")
+st.title("Houston Faith Church Sermon Q&A (In Development)")
+question = st.text_input("Search a topic or ask a question about our sermons:")
 
 if st.button("Get Answer"):
     if not question:
