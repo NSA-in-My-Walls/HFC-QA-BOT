@@ -1,5 +1,9 @@
 name: Weekly Sermon & Index Update
 
+# ensure the token can push commits
+permissions:
+  contents: write
+  
 # run every Monday at 2 AM UTC
 on:
   schedule:
