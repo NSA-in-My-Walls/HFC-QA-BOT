@@ -95,6 +95,37 @@ st.sidebar.markdown(
 )
 K = st.sidebar.slider("Number of chunks (K)", 1, 20, 9, step=1)
 
+# Generation parameters
+st.sidebar.markdown("---")
+st.sidebar.subheader("Generation parameters")
+
+temperature = st.sidebar.slider(
+    "Temperature",
+    min_value=0.0,
+    max_value=1.0,
+    value=0.5,
+    step=0.05,
+    help="Controls randomness: lower = more deterministic"
+)
+
+top_p = st.sidebar.slider(
+    "Top-p (nucleus sampling)",
+    min_value=0.0,
+    max_value=1.0,
+    value=0.85,
+    step=0.05,
+    help="Fraction of probability mass to sample from"
+)
+
+max_output_tokens = st.sidebar.number_input(
+    "Max output tokens",
+    min_value=256,
+    max_value=4096,
+    value=2048,
+    step=128,
+    help="Maximum length of the model’s answer"
+)
+
 # ─── MMR re-ranking ─────────────────────────────────────────────────────────────
 def mmr(doc_embs: np.ndarray, query_emb: np.ndarray, top_n: int, k: int,
         lambda_param: float = 0.7) -> list[int]:
@@ -190,9 +221,9 @@ if st.button("Get Answer"):
             response = model.generate_content(
                 prompt,
                 generation_config=types.GenerationConfig(
-                    temperature=0.5,
-                    top_p=0.85,
-                    max_output_tokens=2048
+                    temperature=temperature,
+                    top_p=top_p,
+                    max_output_tokens=max_output_tokens
                 )
             )
             answer = response.text.strip()
